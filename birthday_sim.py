@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class BirthdaySim:
     SIMULATIONS_SAVE_PATH = "data/simulations.csv"
-    PLOT_SAVE_PATH = "../plots/simulation_graph.png"
+    PLOT_SAVE_PATH = "plots/simulation_graph.png"
 
     def __init__(self, total_simulations: int = 100000, group_size: int = 23):
         """
