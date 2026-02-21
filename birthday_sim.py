@@ -9,30 +9,33 @@ class BirthdaySim:
     SIMULATIONS_SAVE_PATH = "data/simulations.csv"
     PLOT_SAVE_PATH = "plots/simulation_graph.png"
 
-    def __init__(self, total_simulations: int = 100000, group_size: int = 23):
+    def __init__(self, total_simulations: int = 100000, group_sizes: int | list[int] = 23):
         """
         Initializes the birthday simulation
 
         :param total_simulations: Number of times to run the simulation
-        :param group_size: Number of people in the group
+        :param group_sizes: Number of people in the group, or a list of group sizes
         """
         self.total_simulations = total_simulations
-        self.group_size = group_size
+        self.group_sizes = group_sizes if isinstance(group_sizes, list) else [group_sizes]
 
     def simulate(self) -> None:
         """Runs the birthday paradox simulation"""
         print("\nSimulate is starting...")
 
-        duplicate_count = 0
-        for _ in range(self.total_simulations):
-            birthdays = choices(range(1, 366), k=self.group_size)
-            if self._has_duplicate(birthdays):
-                duplicate_count += 1
+        sim_res = []
+        for group_size in self.group_sizes:
+            duplicate_count = 0
+            for _ in range(self.total_simulations):
+                birthdays = choices(range(1, 366), k=group_size)
+                if self._has_duplicate(birthdays):
+                    duplicate_count += 1
 
-        probability = round(duplicate_count / self.total_simulations * 100, 2)
+            probability = round(duplicate_count / self.total_simulations * 100, 2)
+            sim_res.append((group_size, duplicate_count, probability))
 
         print(f"Simulations save to {self.SIMULATIONS_SAVE_PATH}")
-        self._save(duplicate_count, probability)
+        self._save(sim_res)
 
     @staticmethod
     def _has_duplicate(birthdays: list) -> bool:
@@ -44,33 +47,32 @@ class BirthdaySim:
             seen.add(b)
         return False
 
-    def _save(self, duplicate_count: int, probability: float) -> None:
+    def _save(self, sim_res: list[tuple[int, int, float]]) -> None:
         """Saves the simulation results to a CSV file"""
         file_exists = os.path.exists(self.SIMULATIONS_SAVE_PATH)
+        next_id = 1
+
+        if file_exists:
+            with open(self.SIMULATIONS_SAVE_PATH, "r", encoding="utf-8") as f:
+                reader = list(csv.reader(f))
+                if len(reader) > 1:
+                    last_id = int(reader[-1][0])
+                    next_id = last_id + 1
+
         with open(self.SIMULATIONS_SAVE_PATH, "a", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
-
             if not file_exists:
-                writer.writerow([
-                    "id", "group_size", "total_simulations", "duplicate_count", "probability"
-                ])
-                row_id = 1
-            else:
-                with open(self.SIMULATIONS_SAVE_PATH, "r", encoding="utf-8") as f:
-                    lines = f.readlines()
-                    if len(lines) > 1:
-                        last_id = int(lines[-1].split(',')[0])
-                        row_id = last_id + 1
-                    else:
-                        row_id = 1
+                writer.writerow(["id", "group_size", "total_simulations", "duplicate_count", "probability"])
 
-            writer.writerow([
-                row_id,
-                self.group_size,
-                self._format_num(self.total_simulations),
-                self._format_num(duplicate_count),
-                probability
-            ])
+            for group_size, duplicate_count, probability in sim_res:
+                writer.writerow([
+                    next_id,
+                    group_size,
+                    self._format_num(self.total_simulations),
+                    self._format_num(duplicate_count),
+                    probability
+                ])
+                next_id += 1
 
     @staticmethod
     def _format_num(num: int) -> str:
@@ -113,6 +115,6 @@ class BirthdaySim:
 
 
 if __name__ == "__main__":
-    birthday_sim = BirthdaySim()
+    birthday_sim = BirthdaySim(group_sizes=[5, 10, 15, 20, 25, 50])
     birthday_sim.simulate()
     birthday_sim.draw_graph()
