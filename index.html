@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Paradox Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0f1011;
+            --card-bg: #161819;
+            --input-bg: #0f1011;
+            --border: #26292b;
+            --border-hover: #3b3f42;
+            --text-main: #f0f2f4;
+            --text-muted: #8b9298;
+            --accent: #f0f2f4;
+            --accent-text: #0f1011;
+            --accent-hover: #d8dcde;
+        }
+
+        [data-theme="light"] {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border: #e2e4e7;
+            --border-hover: #c4c8cd;
+            --text-main: #14171a;
+            --text-muted: #68717a;
+            --accent: #14171a;
+            --accent-text: #ffffff;
+            --accent-hover: #2c3136;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            padding: 40px 16px;
+            display: flex;
+            justify-content: center;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 820px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .theme-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--border-hover);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 0.775rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .field input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .field input:focus {
+            border-color: var(--border-hover);
+        }
+
+        button.run-btn {
+            background: var(--accent);
+            color: var(--accent-text);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 9px 16px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.15s;
+        }
+
+        button.run-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .stat-item .val {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-item .lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .chart-box {
+            height: 350px;
+            position: relative;
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: var(--text-main);
+            color: var(--bg);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.4;
+            white-space: normal;
+            width: max-content;
+            max-width: 220px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            border: 6px solid transparent;
+            border-top-color: var(--text-main);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .tooltip:hover::after,
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-8px);
+        }
+
+        @media (max-width: 600px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Birthday Paradox Simulator</h1>
+            <p>Monte Carlo simulation of shared birthday probability</p>
+        </div>
+        <button class="theme-btn" id="themeToggle" type="button">Theme: Dark</button>
+    </header>
+
+    <div class="card controls">
+        <div class="field">
+            <label for="groupSize">Group size (n)</label>
+            <input type="number" id="groupSize" value="23" min="2" max="100">
+        </div>
+        <div class="field">
+            <label for="simCount">Iterations</label>
+            <input type="number" id="simCount" value="1000" min="100" max="50000" step="500">
+        </div>
+        <button class="run-btn" id="startBtn" type="button">Run Simulation</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item tooltip" data-tooltip="The actual percentage of matches found during our randomized Monte Carlo trials. Fluctuates slightly due to randomness.">
+            <div class="val" id="expProb">—</div>
+            <div class="lbl">Simulated Probability &#9432;</div>
+        </div>
+        <div class="stat-item tooltip" data-tooltip="The exact mathematical chance calculated via combinatorics. A perfect, unchanging ideal.">
+            <div class="val" id="theoryProb">—</div>
+            <div class="lbl">Theoretical Probability &#9432;</div>
+        </div>
+        <div class="stat-item tooltip" data-tooltip="The raw number of iterations where at least two people shared a birthday.">
+            <div class="val" id="matchCount">—</div>
+            <div class="lbl">Collisions Recorded &#9432;</div>
+        </div>
+    </div>
+
+    <div class="card chart-box">
+        <canvas id="birthdayChart"></canvas>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    /**@typedef {"light" | "dark"} ThemeMode*/
+
+    /**
+     * @typedef {Object} SimulationResult
+     * @property {number} probability - Calculated probability of at least one match as a percentage (0-100)
+     * @property {number} matches - Total count of iterations where a duplicate was found
+     */
+
+    /**
+     * @typedef {Object} ChartData
+     * @property {SimulationResult} exactResult - The exact simulation outcome for the target group size
+     * @property {number} theoryProb - The calculated theoretical probability for the target group size
+     * @property {number[]} labels - Array of group sizes representing the x-axis points
+     * @property {number[]} theoryData - Theoretical probability values for each group size
+     * @property {number[]} simProbabilities - Simulated probability values for each group size
+     */
+
+
+    let chartInstance = null
+    const themeBtn = document.getElementById("themeToggle")
+
+    /**
+     * Toggles the application theme between light and dark modes
+     * @param {ThemeMode} mode - The theme mode to apply ("light" or "dark").
+     * @returns {void}
+     */
+    function setTheme(mode) {
+        if (mode === "light") {
+            document.documentElement.setAttribute("data-theme", "light")
+            themeBtn.textContent = "Theme: Light"
+        } else {
+            document.documentElement.removeAttribute("data-theme")
+            themeBtn.textContent = "Theme: Dark"
+        }
+        localStorage.setItem("app-theme", mode)
+        updateChartColors(mode)
+    }
+
+    themeBtn.addEventListener("click", () => {
+        const isLight = document.documentElement.getAttribute("data-theme") === "light"
+        setTheme(isLight ? "dark" : "light")
+    })
+
+    const storedTheme = localStorage.getItem("app-theme") || "dark"
+    setTheme(storedTheme)
+
+    /**
+     * Initializes and renders the Chart.js line plot comparing theoretical
+     * @param {number[]} labels - X-axis data points representing group sizes
+     * @param {number[]} theoryData - Y-axis data points for theoretical probabilities
+     * @param {number[]} simProbabilities - Y-axis data points for simulated probabilities
+     * @param {number} targetSize - The user-selected group size highlighted on the chart
+     * @returns {void}
+     */
+    function renderChart(labels, theoryData, simProbabilities, targetSize) {
+        const ctx = document.getElementById("birthdayChart").getContext("2d")
+        const isLight = document.documentElement.getAttribute("data-theme") === "light"
+
+        const textColor = isLight ? "#68717a" : "#8b9298"
+        const gridColor = isLight ? "#e2e4e7" : "#26292b"
+        const theoryLineColor = isLight ? "#14171a" : "#f0f2f4"
+        const simLineColor = "#3b82f6"
+
+        if (chartInstance) {
+            chartInstance.destroy()
+        }
+
+        chartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Theoretical Probability",
+                        data: theoryData,
+                        borderColor: theoryLineColor,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4
+                    },
+                    {
+                        label: "Simulated Data",
+                        data: simProbabilities,
+                        borderColor: simLineColor,
+                        backgroundColor: isLight ? "rgba(59, 130, 246, 0.1)" : "rgba(59, 130, 246, 0.2)",
+                        borderWidth: 2,
+                        pointRadius: (ctx) => ctx.dataIndex === (targetSize - 2) ? 6 : 0,
+                        pointBackgroundColor: simLineColor,
+                        pointBorderColor: "#fff",
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: textColor,
+                            font: {
+                                family: "Inter"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Group Size (n)",
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Probability (%)",
+                            color: textColor
+                        },
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor
+                        },
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        })
+    }
+
+    /**
+     * Updates chart color palette dynamically according to the selected theme
+     * @param {ThemeMode} mode - The current theme mode ("light" or "dark")
+     * @returns {void}
+     */
+    function updateChartColors(mode) {
+        if (!chartInstance) return
+        const isLight = mode === "light"
+        const textColor = isLight ? "#68717a" : "#8b9298"
+        const gridColor = isLight ? "#e2e4e7" : "#26292b"
+        const theoryLineColor = isLight ? "#14171a" : "#f0f2f4"
+
+        chartInstance.options.scales.x.grid.color = gridColor
+        chartInstance.options.scales.y.grid.color = gridColor
+        chartInstance.options.scales.x.ticks.color = textColor
+        chartInstance.options.scales.y.ticks.color = textColor
+        chartInstance.options.scales.x.title.color = textColor
+        chartInstance.options.scales.y.title.color = textColor
+        chartInstance.options.plugins.legend.labels.color = textColor
+
+        chartInstance.data.datasets[0].borderColor = theoryLineColor
+        chartInstance.data.datasets[1].backgroundColor = isLight ? "rgba(59, 130, 246, 0.1)" : "rgba(59, 130, 246, 0.2)"
+
+        chartInstance.update()
+    }
+
+
+    class BirthdaySim {
+
+        /**
+         * Calculates the exact theoretical probability of at least one shared birthday
+         * @param {number} n - Number of people in the group
+         * @returns {number} Probability in percent
+         */
+        getTheoreticalProbability(n) {
+            let pNoMatch = 1.0
+            for (let i = 0; i < n; i++) {
+                pNoMatch *= (365 - i) / 365
+            }
+            return (1 - pNoMatch) * 100
+        }
+
+        /**
+         * Runs a Monte Carlo simulation for the birthday paradox for a given group size
+         * @param {number} size - The number of people in the group
+         * @param {number} iterations - The number of simulation trials to run
+         * @returns {SimulationResult} The outcome containing probability percentage and match count
+         */
+        runSimulationForSize(size, iterations) {
+            let duplicates = 0
+            for (let i = 0; i < iterations; i++) {
+                let seen = new Set()
+                let hasMatch = false
+
+                for (let j = 0; j < size; j++) {
+                    let birthday = Math.floor(Math.random() * 365)
+                    if (seen.has(birthday)) {
+                        hasMatch = true
+                        break
+                    }
+                    seen.add(birthday)
+                }
+                if (hasMatch) duplicates++
+            }
+            return {
+                probability: (duplicates / iterations) * 100,
+                matches: duplicates
+            }
+        }
+
+        /**
+         * Orchestrates full dataset generation across sample ranges for chart visualization
+         * @param {number} targetSize - Target group size requested by the user
+         * @param {number} iterations - Max iterations requested for the primary target size
+         * @returns {ChartData} Complete payload required to render the chart
+         */
+        simulate(targetSize, iterations) {
+            const exactResult = this.runSimulationForSize(targetSize, iterations)
+            const theoryProb = this.getTheoreticalProbability(targetSize)
+
+            const labels = []
+            const theoryData = []
+            const simProbabilities = []
+
+            const maxGraphN = Math.max(70, targetSize + 5)
+            const graphIters = Math.min(iterations, 10000)
+
+            for (let n = 2; n <= maxGraphN; n++) {
+                labels.push(n)
+                theoryData.push(this.getTheoreticalProbability(n))
+
+                if (n === targetSize) {
+                    simProbabilities.push(exactResult.probability)
+                } else {
+                    simProbabilities.push(this.runSimulationForSize(n, graphIters).probability)
+                }
+            }
+
+            return {
+                exactResult,
+                theoryProb,
+                labels,
+                theoryData,
+                simProbabilities
+            }
+        }
+    }
+
+
+    const birthdaySim = new BirthdaySim()
+
+    const startBtn = document.getElementById("startBtn")
+    startBtn.addEventListener("click", () => {
+        const groupSize = document.getElementById("groupSize").valueAsNumber
+        const iterations = document.getElementById("simCount").valueAsNumber
+
+        const simData = birthdaySim.simulate(groupSize, iterations)
+
+        document.getElementById("expProb").innerText = simData.exactResult.probability.toFixed(2) + "%"
+        document.getElementById("theoryProb").innerText = simData.theoryProb.toFixed(2) + "%"
+        document.getElementById("matchCount").innerText = String(simData.exactResult.matches)
+
+        renderChart(simData.labels, simData.theoryData, simData.simProbabilities, groupSize)
+    })
+    startBtn.click()
+</script>
+</body>
+</html>
